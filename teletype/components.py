@@ -22,6 +22,7 @@ class ChoiceHelper(Generic[V]):
         label: Optional[str] = None,
         style: TSTYLE = None,
         mnemonic: Optional[str] = None,
+        ignore_case: bool = True,
     ):
         self._idx = -1
         self._bracketed = False
@@ -31,7 +32,12 @@ class ChoiceHelper(Generic[V]):
         style = style or ""
         self.style = style if isinstance(style, str) else " ".join(style)
         self._mnemonic = ""
-        self.mnemonic = mnemonic
+        self.ignore_case = ignore_case
+        if ignore_case and mnemonic:
+            self.mnemonic = mnemonic.lower()
+        else:
+            self.mnemonic = mnemonic
+
 
     def __repr__(self):
         r = "ChoiceHelper(%r" % self.value
@@ -86,12 +92,13 @@ class ChoiceHelper(Generic[V]):
             self._idx = self._str.lower().find(self._mnemonic.lower())
         else:
             raise ValueError("mnemonic must be None or of form 'x' or '[x]'")
-        if self.label:
-            backing_value = self.label
-        else:
-            backing_value = str(self.value)
-        if self._mnemonic and self._mnemonic not in backing_value:
-            raise ValueError("mnemonic not present in value or label")
+        if not self.ignore_case:
+            if self.label:
+                backing_value = self.label
+            else:
+                backing_value = str(self.value)
+            if self._mnemonic and self._mnemonic not in backing_value:
+                raise ValueError("mnemonic not present in value or label")
 
 
 class SelectOne:
@@ -110,12 +117,14 @@ class SelectOne:
         self.chars.update(chars)
         self._mnemonic_idx_map: Dict[str, int] = {}
         self._choices: List[Any] = []
-        for choice in choices:
+        for count, choice in enumerate(choices):
             if choice in self._choices:
                 continue
             self._choices.append(choice)
             if isinstance(choice, ChoiceHelper) and choice.mnemonic:
-                self._mnemonic_idx_map[choice.mnemonic] = len(self._mnemonic_idx_map)
+                self._mnemonic_idx_map[choice.mnemonic] = count
+                if choice.ignore_case:
+                    self._mnemonic_idx_map[choice.mnemonic.upper()] = count
         self._line = 0
         self._selected_lines: Set[int] = set()
 
@@ -167,13 +176,11 @@ class SelectOne:
                 break
             # mnemonic pressed
             elif self._mnemonic_idx_map.get(key) is not None:
-                choice_count = len(self.choices)
-                mnemonic_count = len(self._mnemonic_idx_map)
                 mnemonic_idx = self._mnemonic_idx_map[key]
-                dist = choice_count - mnemonic_count - self._line + mnemonic_idx
+                dist = - self._line + mnemonic_idx
                 self._move_line(dist)
                 if self._select_by_mnemonic:
-                    self._select_line()
+                    break
                 elif dist == 0:
                     # on second keypress...
                     if self._multiselect:
