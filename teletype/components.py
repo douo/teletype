@@ -103,6 +103,7 @@ class SelectOne:
     """
 
     _multiselect = False
+    _select_by_mnemonic = True
 
     def __init__(self, choices: Iterable, **chars: str):
         self.chars = codes.CHARS_DEFAULT.copy()
@@ -171,7 +172,9 @@ class SelectOne:
                 mnemonic_idx = self._mnemonic_idx_map[key]
                 dist = choice_count - mnemonic_count - self._line + mnemonic_idx
                 self._move_line(dist)
-                if dist == 0:
+                if self._select_by_mnemonic:
+                    self._select_line()
+                elif dist == 0:
                     # on second keypress...
                     if self._multiselect:
                         self._select_line()
