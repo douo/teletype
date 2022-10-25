@@ -21,6 +21,7 @@ class ChoiceHelper(Generic[V]):
         value: V,
         label: Optional[str] = None,
         style: TSTYLE = None,
+        mnemonic_style: TSTYLE = "underline",
         mnemonic: Optional[str] = None,
         ignore_case: bool = True,
     ):
@@ -31,6 +32,8 @@ class ChoiceHelper(Generic[V]):
         self.label = label
         style = style or ""
         self.style = style if isinstance(style, str) else " ".join(style)
+        mnemonic_style = mnemonic_style or ""
+        self.mnemonic_style = mnemonic_style if isinstance(mnemonic_style, str) else " ".join(mnemonic_style)
         self._mnemonic = ""
         self.ignore_case = ignore_case
         if ignore_case and mnemonic:
@@ -63,7 +66,7 @@ class ChoiceHelper(Generic[V]):
         else:
             s = (
                 io.style_format(self._str[: self._idx], self.style)
-                + io.style_format(self._str[self._idx], "underline " + self.style)
+                + io.style_format(self._str[self._idx], self.mnemonic_style)
                 + io.style_format(self._str[self._idx + 1 :], self.style)
             )
         return s
