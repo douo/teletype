@@ -221,7 +221,7 @@ class SelectOne:
             for line in self._selected_lines
         )
 
-    def prompt(self) -> Any:
+    def prompt(self, ending = None) -> Any:
         self._line = 0
         self._selected_lines = set()
         if not self.choices:
@@ -229,13 +229,17 @@ class SelectOne:
         i = 0
         for i, choice in enumerate(self.choices):
             self._display_choice(i, choice)
-        io.move_cursor(rows=-1 * i - 1)
+        offset = 1
+        if ending:
+            print(ending)
+            offset = 2
+        io.move_cursor(rows=-1 * i - offset)
         io.hide_cursor()
         try:
             self._process_keypress()
         finally:
             io.show_cursor()
-            io.move_cursor(rows=len(self.choices) - self._line)
+            io.move_cursor(rows=len(self.choices) - self._line  + (offset - 1))
         return self.selected if self._multiselect else self.highlighted
 
 
